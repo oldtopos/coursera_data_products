@@ -1,0 +1,35 @@
+---
+title: "Data Products Project"
+author: "John Novak"
+date: "March 22, 2015"
+output: html_document
+---
+
+Preprocessing on Exploratory Data Analysis datasets to prepare for deployment as part of a shiny app. The original app used the 
+full source datasets and was unable to load in any reasonable amount of time
+```{r load_source_data}
+setwd( "/Users/jnovak/Documents/personal//coursera/Data_Products/Project 1/")
+NEI <- readRDS("data/summarySCC_PM25.rds")
+SCC <- readRDS("data/Source_Classification_Code.rds")
+```
+
+Create county filter with fips codes and county names
+
+```{r fips_data}
+counties <- c( "Kings County (Brooklyn)", "Los Angeles County", "Cook County (Chicago)", "Harris County (Houston)", 
+               "Maricopa County (Phoenix)", "San Diego County", "Orange County", "Miamai-Dade County", "Dallas County", "Queens County"  )
+countiesFips <- c( "36047", "06037", "17031", "48201", 
+                   "04013", "06073", "06059", "12086", "48113", "36081"  )
+fipsFrame<-as.data.frame(countiesFips,counties)
+fipsFrame<-cbind(fipsFrame,counties)
+colnames(fipsFrame)<-c("fips","county")
+```
+
+Filter data by on Road vehicles, place in subsetData frame, and write to file system.  The resulting file is deployed with the shiny app.
+
+```{r filter_data}
+filterSCC <- SCC$SCC[ grep( "On-Road", SCC$EI.Sector) ]
+subsetData <- subset( NEI, SCC %in% filterSCC, fips:year )
+subsetData <- merge(subsetData,fipsFrame,by.x="fips",by.y="fips")  #  add FIPS columns
+write.table(subsetData, file = "data/subsetData.txt",sep = ",") 
+```
